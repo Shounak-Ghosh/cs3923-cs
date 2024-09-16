@@ -1,10 +1,15 @@
 import hashlib
 
-def hash_password(password):
-    """Hash a password using SHA-1 and return the hexadecimal digest."""
-    sha1 = hashlib.sha1()
-    sha1.update(password.encode('utf-8'))
-    return sha1.hexdigest()
+def hash_password(password, algorithm='sha256'):
+    """Hash a password using a specified algorithm and return the hexadecimal digest."""
+    if algorithm == 'sha256':
+        sha256 = hashlib.sha256()
+        sha256.update(password.encode('utf-8'))
+        return sha256.hexdigest()
+    elif algorithm == 'sha1':
+        sha1 = hashlib.sha1()
+        sha1.update(password.encode('utf-8'))
+        return sha1.hexdigest()
 
 def load_hashes(file_path):
     """Load hashes from a file into a set."""
@@ -34,9 +39,9 @@ def dictionary_attack(hash_file, dictionary_file, output_file, max_lines=100):
     
     print(f"Dictionary attack complete. {match_count} matches found. Percent of hashes cracked: {match_count / num_hashes * 100:.2f}%")
 
-hash_file = 'linkedin/SHA1.txt' # File containing SHA-1 hashes
-dictionary_file = '7-more-passwords.txt'  # File containing dictionary of possible passwords
-output_file = 'linkedin_matches.txt'  # Output file to save matches
+hash_file = 'formspring/formspring.txt' # File containing SHA-1 hashes
+dictionary_file = 'uniqpass-v16-passwords.txt'  # File containing dictionary of possible passwords
+output_file = 'formspring_dict_matches.txt'  # Output file to save matches
 
 
 dictionary_attack(hash_file , dictionary_file , output_file)
