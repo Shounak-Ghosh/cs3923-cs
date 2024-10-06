@@ -95,7 +95,7 @@ def main():
                         help="Path to the dictionary file (default: '7-more-passwords.txt').")
     parser.add_argument('-m', '--max-lines', type=int, default=100,
                         help="Maximum number of matches to write to the output file (default: 100).")
-    parser.add_argument('--early-stop', action='store_true', help='Enable early stopping')
+    parser.add_argument('--early-stop', action='store_true', help='Enable early stopping; stop after max_lines matches.')
 
     args = parser.parse_args()
 
