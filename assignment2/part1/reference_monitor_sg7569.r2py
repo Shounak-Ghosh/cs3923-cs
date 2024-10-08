@@ -26,7 +26,7 @@ def is_valid_filename(filename):
         return False
     if filename == '.' or filename == '..':
         return False
-    if filename.startswith('.') or '/' in filename or '//' in filename:
+    if filename.startswith('.'):
         return False
     allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789-_."
     for char in filename:

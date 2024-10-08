@@ -49,9 +49,10 @@ exit
 ```
 
 ### 6. Running the Container
-To run the container again, make sure it is running in Docker Desktop. Use `docker ps` to determine the container id/name. The following command will enter the container:
+To run the container again, use `docker ps -a` to determine the container id/name. The following commands will start and enter the container:
 
 ```bash
+docker start <container id/name>
 docker exec -it <container id/name> /bin/bash
 ```
 
