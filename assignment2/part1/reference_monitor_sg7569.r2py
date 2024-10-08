@@ -21,9 +21,26 @@ if "created_files" not in mycontext:
 if "open_files" not in mycontext:
     mycontext['open_files'] = set()
 
+def is_valid_filename(filename):
+    if not filename or len(filename) > 120:
+        return False
+    if filename == '.' or filename == '..':
+        return False
+    if filename.startswith('.') or '/' in filename or '//' in filename:
+        return False
+    allowed_chars = "abcdefghijklmnopqrstuvwxyz0123456789-_."
+    for char in filename:
+        if char not in allowed_chars:
+            return False
+    return True
+
 class LPFile:
     def __init__(self, filename, create):
         mycontext['debug'] = False
+        
+        # Validate filename
+        if not is_valid_filename(filename):
+            raise FileNotFoundError("Invalid filename: '" + filename + "'")
         
         if filename in mycontext['open_files']:
             raise FileInUseError("File is already open")
@@ -84,6 +101,9 @@ def LPopenfile(filename, create):
         raise e
 
 def LPremovefile(filename):
+    if not is_valid_filename(filename):
+        raise FileNotFoundError("Invalid filename: '" + filename + "'")
+    
     try:
         if filename == 'default':
             for f in list(mycontext['created_files']):
