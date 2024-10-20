@@ -1,0 +1,10 @@
+# testing openfile("xxx",True)
+# expected: create empty new file
+
+if "default" in listfiles():
+    removefile("default")
+
+# create default file
+default = openfile("default", True)
+default.writeat("Template", 0)
+default.close()
