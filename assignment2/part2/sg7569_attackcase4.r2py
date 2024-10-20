@@ -19,4 +19,4 @@ myfile_reopen = openfile("testfile.txt", False)
 assert myfile_reopen.readat(None, 0) == "TEMPLATE", "Content mismatch after reopening testfile.txt"
 myfile_reopen.close()
 
-print("Attack Case 4 passed: File retains content after reopening.")
+log("Attack Case 4 passed: File retains content after reopening.")

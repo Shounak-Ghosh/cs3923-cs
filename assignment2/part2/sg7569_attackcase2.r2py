@@ -22,4 +22,4 @@ default.close()
 # Check if testfile.txt has been deleted after default modification
 assert "testfile.txt" not in listfiles(), "testfile.txt should have been deleted after modifying default"
 
-print("Attack Case 2 passed: Closed files deleted after default modification.")
+log("Attack Case 2 passed: Closed files deleted after default modification.")

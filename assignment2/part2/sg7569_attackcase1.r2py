@@ -25,4 +25,4 @@ myfile.close()
 # Ensure the file still exists after the default file is deleted
 assert "testfile.txt" in listfiles(), "testfile.txt should still exist"
 
-print("Attack Case 1 passed: File integrity maintained after default deletion.")
+log("Attack Case 1 passed: File integrity maintained after default deletion.\n")

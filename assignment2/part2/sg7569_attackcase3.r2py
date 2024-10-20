@@ -10,11 +10,11 @@ if "file2.txt" in listfiles():
 try:
     file1 = openfile("file1.txt", False)
 except FileNotFoundError:
-    print("Attack Case 3: file1.txt correctly raised FileNotFoundError")
+    log("Attack Case 3: file1.txt correctly raised FileNotFoundError")
 
 try:
     file2 = openfile("file2.txt", False)
 except FileNotFoundError:
-    print("Attack Case 3: file2.txt correctly raised FileNotFoundError")
+    log("Attack Case 3: file2.txt correctly raised FileNotFoundError")
 
-print("Attack Case 3 passed: Files without default handled correctly.")
+log("Attack Case 3 passed: Files without default handled correctly.")
