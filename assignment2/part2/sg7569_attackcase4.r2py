@@ -1,22 +1,20 @@
 # Clean up if the files exist
 if "default" in listfiles():
     removefile("default")
-if "testfile.txt" in listfiles():
-    removefile("testfile.txt")
+if "file1.txt" in listfiles():
+    removefile("file1.txt")
+if "file2.txt" in listfiles():
+    removefile("file2.txt")
 
-# Create and write to default file
-default = openfile("default", True)
-default.writeat("TEMPLATE", 0)
-default.close()
+# Attempt to open multiple files without creating them (default doesn't exist)
+try:
+    file1 = openfile("file1.txt", False)
+except FileNotFoundError:
+    pass
 
-# Open a file using default and close it
-myfile = openfile("testfile.txt", False)
-assert myfile.readat(None, 0) == "TEMPLATE", "Initial content mismatch in testfile.txt"
-myfile.close()
+try:
+    file2 = openfile("file2.txt", False)
+except FileNotFoundError:
+    pass
 
-# Re-open testfile.txt and check its content
-myfile_reopen = openfile("testfile.txt", False)
-assert myfile_reopen.readat(None, 0) == "TEMPLATE", "Content mismatch after reopening testfile.txt"
-myfile_reopen.close()
 
-log("Attack Case 4 passed: File retains content after reopening.")

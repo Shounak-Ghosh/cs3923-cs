@@ -9,17 +9,19 @@ default = openfile("default", True)
 default.writeat("TEMPLATE", 0)
 default.close()
 
-# Open a file using default and close it
+# Open a file using default
 myfile = openfile("testfile.txt", False)
-assert myfile.readat(None, 0) == "TEMPLATE", "Initial content mismatch in testfile.txt"
+
+# Delete default while the file is still open
+removefile("default")
+
+# Read and write to the open file
+assert myfile.readat(None, 0) == "TEMPLATE"
+myfile.writeat("MODIFIED", 9)
+
+# Close the file
 myfile.close()
 
-# Modify default
-default = openfile("default", False)
-default.writeat("MODIFIED TEMPLATE", 0)
-default.close()
+# Ensure the file still exists after the default file is deleted
+assert "testfile.txt" in listfiles()
 
-# Check if testfile.txt has been deleted after default modification
-assert "testfile.txt" not in listfiles(), "testfile.txt should have been deleted after modifying default"
-
-log("Attack Case 2 passed: Closed files deleted after default modification.")

@@ -1,28 +1,24 @@
 # Clean up if the files exist
 if "default" in listfiles():
-    removefile("default")
+  removefile("default")
 if "testfile.txt" in listfiles():
     removefile("testfile.txt")
 
-# Create and write to default file
+# Create a default file
 default = openfile("default", True)
+
+# Initial write to default
 default.writeat("TEMPLATE", 0)
+
+# Close default
 default.close()
 
-# Open a file using default
+# Open a file that doesn't exist
 myfile = openfile("testfile.txt", False)
 
-# Delete default while the file is still open
-removefile("default")
-
-# Read and write to the open file
-assert myfile.readat(None, 0) == "TEMPLATE", "Reading file after default deletion failed"
-myfile.writeat("MODIFIED", 9)
+# Read from the file. 
+# Passing None as first argument indicates that we want to read the whole file from offset 0.
+assert myfile.readat(None, 0) == "TEMPLATE"
 
 # Close the file
 myfile.close()
-
-# Ensure the file still exists after the default file is deleted
-assert "testfile.txt" in listfiles(), "testfile.txt should still exist"
-
-log("Attack Case 1 passed: File integrity maintained after default deletion.\n")
