@@ -1,12 +1,12 @@
 """
-This security layer inadequately handles the default functionality
+This security layer handles the default functionality as specified.
 
 Note:
-    This security layer uses encasementlib.r2py, restrictions.default, repy.py and Python
+    This security layer uses encasementlib.r2py, restrictions.default, repy.py and Python 3
     Also you need to give it an application to run.
     python repy.py restrictions.default encasementlib.r2py [security_layer].r2py [attack_program].r2py 
-    
 """
+
 TYPE = "type"
 ARGS = "args"
 RETURN = "return"
@@ -15,25 +15,29 @@ TARGET = "target"
 FUNC = "func"  
 OBJC = "objc"
 
-mycontext['closed_files'] = set()
-mycontext['default_file'] = None
-mycontext['default_lock'] = createlock()
-mycontext['closed_files_lock'] = createlock()
+# Initialize shared resources in the context with locking mechanisms
+mycontext['closed_files'] = set()  # Track files that have been closed, use discard() instead of remove() so key errors are not raised
+mycontext['default_file'] = None  # Keep a reference to the 'default' file
+mycontext['lock_for_default'] = createlock()  # Lock for operations on the 'default' file
+mycontext['lock_for_closed'] = createlock()  # Lock for closed files management
 
 class LPFile():
     def __init__(self, filename, create):
         self.filename = filename
-        self.is_default = (filename == 'default')
+        self.is_default = (filename == 'default')  # Flag to check if the file is 'default'
         
+        # Handling for non-default files
         if not self.is_default:
-            mycontext['closed_files_lock'].acquire(True)
+            mycontext['lock_for_closed'].acquire(True)  # Lock to prevent race conditions
             try:
-                mycontext['closed_files'].discard(filename)
+                mycontext['closed_files'].discard(filename)  # Remove from closed files set if reopening
 
+                # If the file doesn’t exist and it’s not being created, attempt to copy content from 'default'
                 if not create and filename not in listfiles():
                     if 'default' in listfiles():
-                        mycontext['default_lock'].acquire(True)
+                        mycontext['lock_for_default'].acquire(True)  # Lock for safe access to 'default'
                         try:
+                            # If 'default' is already open, read its content; else, open and copy
                             if mycontext['default_file'] is not None:
                                 content = mycontext['default_file'].readat(None, 0)
                                 self.LPfile = openfile(filename, True)
@@ -43,86 +47,94 @@ class LPFile():
                                 content = default_file.readat(None, 0)
                                 self.LPfile = openfile(filename, True)
                                 self.LPfile.writeat(content, 0)
-                                default_file.close()
+                                default_file.close()  # Close 'default' after copying
                         finally:
-                            mycontext['default_lock'].release()
+                            mycontext['lock_for_default'].release()
                     else:
-                        raise FileNotFoundError('The default file to be used as a template does not exist!')
+                        raise FileNotFoundError('The default file does not exist.')
                 else:
-                    self.LPfile = openfile(filename, create)
+                    self.LPfile = openfile(filename, create)  # Open the file normally if it exists or is being created
             finally:
-                mycontext['closed_files_lock'].release()
+                mycontext['lock_for_closed'].release()
         else:
-            mycontext['default_lock'].acquire(True)
+            # Handling for the 'default' file with lock to manage concurrent access
+            mycontext['lock_for_default'].acquire(True)
             try:
+                # Create 'default' and clean up closed files if it’s new
                 if create and 'default' not in listfiles():
                     self.LPfile = openfile(filename, create)
                     mycontext['default_file'] = self.LPfile
-                    remove_closed_files()
+                    remove_closed_files()  # Remove all closed files when 'default' is created
                 else:
-                    self.LPfile = openfile(filename, create)
+                    self.LPfile = openfile(filename, create)  # Open 'default' if it exists or is being recreated
                     mycontext['default_file'] = self.LPfile
             finally:
-                mycontext['default_lock'].release()
+                mycontext['lock_for_default'].release()
                 
     def readat(self, num_bytes, offset):
+        # Read operation with no additional locking needed as it only reads data
         return self.LPfile.readat(num_bytes, offset)
 
     def writeat(self, data, offset):
+        # Writing data; if it's 'default', acquire lock to ensure consistency
         if self.is_default:
-            mycontext['default_lock'].acquire(True)
+            mycontext['lock_for_default'].acquire(True)
             try:
                 self.LPfile.writeat(data, offset)
-                remove_closed_files()
+                remove_closed_files()  # Purge closed files after modifying 'default'
             finally:
-                mycontext['default_lock'].release()
+                mycontext['lock_for_default'].release()
         else:
-            self.LPfile.writeat(data, offset)
+            self.LPfile.writeat(data, offset)  # Regular write if it’s not 'default'
 
     def close(self):  
+        # Close file operation with lock handling based on whether it's 'default'
         if not self.is_default:
-            mycontext['closed_files_lock'].acquire(True)
+            mycontext['lock_for_closed'].acquire(True)
             try:
-                self.LPfile.close()
+                self.LPfile.close()  # Close file and add to closed files set
                 mycontext['closed_files'].add(self.filename)
             finally:
-                mycontext['closed_files_lock'].release()
+                mycontext['lock_for_closed'].release()
         else:
-            mycontext['default_lock'].acquire(True)
+            mycontext['lock_for_default'].acquire(True)
             try:
-                self.LPfile.close()
+                self.LPfile.close()  # Close 'default' and reset reference
                 mycontext['default_file'] = None
             finally:
-                mycontext['default_lock'].release()
+                mycontext['lock_for_default'].release()
 
+# Function to remove all files in the closed files set; used after modifying 'default'
 def remove_closed_files():
-    mycontext['closed_files_lock'].acquire(True)
+    mycontext['lock_for_closed'].acquire(True)
     try:
-        for filename in mycontext['closed_files']:
-            if filename in listfiles():
-                removefile(filename)
-        mycontext['closed_files'] = set()
+        for file in mycontext['closed_files']:
+            if file in listfiles():
+                removefile(file)  # Remove file if it exists in the system
+        mycontext['closed_files'] = set()  # Reset closed files set
     finally:
-        mycontext['closed_files_lock'].release()
+        mycontext['lock_for_closed'].release()
 
 def LPopenfile(filename, create):
+    # Factory function to create or open an LPFile instance
     return LPFile(filename, create)
 
 def LPremovefile(filename):
+    # Remove file function with special handling if the file is 'default'
     if filename == 'default':
-        mycontext['default_lock'].acquire(True)
+        mycontext['lock_for_default'].acquire(True)
         try:
-            removefile(filename)
+            removefile(filename)  # Remove 'default' and purge closed files
             remove_closed_files()
         finally:
-            mycontext['default_lock'].release()
+            mycontext['lock_for_default'].release()
     else:
-        mycontext['closed_files_lock'].acquire(True)
+        mycontext['lock_for_closed'].acquire(True)
         try:
-            removefile(filename)
+            removefile(filename)  # Remove regular file and update closed files set
             mycontext['closed_files'].discard(filename)
         finally:
-            mycontext['closed_files_lock'].release()
+            mycontext['lock_for_closed'].release()
 
 # The code below sets up type checking and variable hiding for you.
 # You should not change anything below this point.
